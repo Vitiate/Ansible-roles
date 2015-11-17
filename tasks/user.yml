@@ -1,0 +1,27 @@
+---
+
+# This task is run if the user is detected as root. Applying keys to the root 
+- debug: msg={{ temp_git }}
+
+- name: "[roles/security/sshng/user]: Create users based on key files"
+  user: name={{ item | basename | regex_replace('.pub', '') }} groups="wheel"
+  with_fileglob:
+    - "{{ temp_git }}/*.pub"
+    - "{{ temp_git }}/{{ inventory_hostname }}/*.pub"
+
+- name: "[roles/security/sshng]: Update authorized_keys based on key files"
+  authorized_key: user={{ item | basename | regex_replace('.pub', '') }}
+                  key={{ lookup('file', item) }}
+                  manage_dir="no"
+                  exclusive="no"
+  register: result
+  with_fileglob:
+    - "{{ temp_git }}/*.pub"
+    - "{{ temp_git }}/{{ inventory_hostname }}/*.pub"
+
+- name: "[roles/security/sshkeys]: Restore SELinux Context"
+  file: path=/home/{{ item | basename | regex_replace('.pub', '') }}/.ssh state=directory serole=object_r setype=user_home_t
+  file: path=/home/{{ item | basename | regex_replace('.pub', '') }}/.ssh/authorized_keys serole=object_r setype=ssh_home_t
+  with_fileglob:
+    - "{{ temp_git }}/*.pub"
+    - "{{ temp_git }}/{{ inventory_hostname }}/*.pub"

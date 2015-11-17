@@ -1,0 +1,9 @@
+---
+#vim:ft=ansible
+
+git_repo: ssh://cs0-master/srv/git/pubkeys
+
+# Temporary File Locations for this role
+pubfile: /tmp/ssh_{{ inventory_hostname }}_pub_keys
+hostfile: /tmp/ssh_{{ inventory_hostname }}_host_keys
+temp_git: /tmp/ansible_ssh

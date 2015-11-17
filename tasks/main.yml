@@ -1,0 +1,26 @@
+---
+#
+# Add SSH Keys to a user, if the user does not exist add the user then add the keys.
+# If SSHNG_ROOT: yes then apply all keys to the root user. Otherwise create a new
+# user for each key found based on the filename of the key preceeding .pub
+#
+
+#- name: "[roles/security/sshng]: Create the key directory"
+#  action: file path=/etc/ssh/authorized_keys/root state=owner=0 group=0 mode=0755 state=directory
+
+- name: "[roles/security/sshng]: Clean up any existing tmp files"
+  local_action: "shell rm -rf {{ pubfile }}"
+  local_action: "shell rm -rf {{ hostfile }}"
+  local_action: "shell rm -rf {{ temp_git }}"
+  ignore_errors: yes
+
+- name: "[roles/security/sshng]: Clone pubkey git repo"
+  local_action: "shell git clone {{ git_repo }} {{ temp_git }}"
+
+- name: "[roles/security/sshng]: Using pubkeys to create users"
+  include: user.yml
+  when: SSHNG_ROOT is undefined or SSHNG_ROOT == "no"
+
+- name: "[roles/security/sshng]: Adding Pubkeys to root user"
+  include: root-user.yml
+  when: SSHNG_ROOT is defined and SSHNG_ROOT == "yes"
